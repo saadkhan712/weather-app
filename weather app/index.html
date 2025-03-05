@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="style.css">
+<body>
+    <div class="container">
+        <h1>🌤 Weather App</h1>
+        <input type="text" id="city" placeholder="Enter city name">
+        <button onclick="getWeather()">Get Weather</button>
+        <p id="loading" class="loading">Fetching weather data...</p>
+        <div id="weather"></div>
+    </div>
+
+    <script>
+        function getWeather() {
+            const city = document.getElementById('city').value;
+            const loadingText = document.getElementById('loading');
+            const weatherDiv = document.getElementById('weather');
+            
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+            
+            loadingText.style.display = 'block';
+            weatherDiv.innerHTML = '';
+            
+            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.results || data.results.length === 0) {
+                        alert('City not found');
+                        loadingText.style.display = 'none';
+                        return;
+                    }
+                    const { latitude, longitude } = data.results[0];
+                    return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const weather = data.current_weather;
+                    const icon = weather.temperature > 20 ? '☀️' : '🌧';
+                    weatherDiv.innerHTML = `
+                        <div class='icon'>${icon}</div>
+                        Temperature: ${weather.temperature}°C<br>
+                        Wind Speed: ${weather.windspeed} km/h
+                    `;
+                    loadingText.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingText.style.display = 'none';
+                });
+        }
+    </script>
+</body>
+</html>
